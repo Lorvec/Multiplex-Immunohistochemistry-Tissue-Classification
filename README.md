@@ -1,6 +1,6 @@
 # Parameter-Efficient Knowledge-Distilled CNNs for MIHIC
 
-[![Verify archived results](https://github.com/Lorvec/Multiplex-Immunohistochemistry-Tissue-Classification/actions/workflows/verify.yml/badge.svg)](https://github.com/Lorvec/Multiplex-Immunohistochemistry-Tissue-Classification/actions/workflows/verify.yml)
+
 [![MIHIC dataset DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10065510.svg)](https://doi.org/10.5281/zenodo.10065510)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/Code%20license-MIT-green.svg)](LICENSE)
