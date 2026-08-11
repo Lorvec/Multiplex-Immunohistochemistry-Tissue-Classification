@@ -1,0 +1,18 @@
+cff-version: 1.2.0
+message: "If you use this software or its reported benchmark results, please cite the associated paper and this repository."
+title: "Parameter-Efficient Knowledge-Distilled CNNs for Multiplex Immunohistochemistry Tissue Classification"
+type: software
+authors:
+  - family-names: Kalatzis
+    given-names: Dimitris
+    email: kalatzis.dimitrios@ac.eap.gr
+repository-code: "https://github.com/Lorvec/Multiplex-Immunohistochemistry-Tissue-Classification"
+license: MIT
+version: 1.0.0
+date-released: 2026-08-11
+keywords:
+  - multiplex immunohistochemistry
+  - computational pathology
+  - knowledge distillation
+  - efficient deep learning
+  - calibration

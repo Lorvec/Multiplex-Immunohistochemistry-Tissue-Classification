@@ -1,0 +1,22 @@
+split,class,count
+test,Immune cells,2393
+test,Necrosis,7694
+test,Other,12937
+test,Stroma,7592
+test,Tumor,27993
+test,alveoli,2891
+test,background,3937
+train,Immune cells,6630
+train,Necrosis,14468
+train,Other,37288
+train,Stroma,25023
+train,Tumor,91357
+train,alveoli,7636
+train,background,12599
+val,Immune cells,1817
+val,Necrosis,1857
+val,Other,11188
+val,Stroma,5362
+val,Tumor,24625
+val,alveoli,1262
+val,background,3149

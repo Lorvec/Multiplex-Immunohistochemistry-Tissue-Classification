@@ -1,0 +1,14 @@
+model_id,kind,variant,attention,multi_scale,distilled,ablation_axis,pretraining,params_m,gmacs
+teacher_convnext_tiny,torchvision_convnext_tiny,,,,False,,ImageNet-1K,27.825510999999995,1.45949184
+proposed_nano_kd,modern_family,nano,False,True,True,,teacher-distilled,0.299843,0.029754463999999998
+proposed_tiny_kd,modern_family,tiny,False,True,True,,teacher-distilled,0.819427,0.039076992
+proposed_small_kd,modern_family,small,False,True,True,,teacher-distilled,2.528199,0.117421824
+ablation_tiny_no_kd,modern_family,tiny,False,True,False,distillation,none,0.819427,0.039076992
+ablation_tiny_with_attention,modern_family,tiny,True,True,True,attention,teacher-distilled,0.8781789999999999,0.040818816
+ablation_tiny_single_scale,modern_family,tiny,False,False,True,multi_scale,teacher-distilled,0.8044509999999999,0.037565568
+control_tinycnn_gap_clean,tinycnn_clean,,,,False,,none,0.390695,0.24268159999999997
+baseline_efficientnet_b0_scratch,torchvision_efficientnet_b0,,,,False,,none,4.016515,0.131167488
+baseline_mobilenet_v3_small_scratch,torchvision_mobilenet_v3_small,,,,False,,none,1.525031,0.019856384
+baseline_mobilenetv4_conv_small_pretrained,timm,,,,False,,ImageNet-1K,2.501991,0.062455039999999996
+baseline_repvit_m0_9_pretrained,timm,,,,False,,ImageNet-1K/distilled,4.724718,0.271623936
+baseline_shvit_s2_pretrained,timm,,,,False,,ImageNet-1K,11.037214999999998,0.11266112
