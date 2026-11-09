@@ -249,25 +249,6 @@ Lower parameter count or theoretical operation count does not necessarily imply 
 
 ---
 
-## Hardware and Software Environment
-
-The archived experimental environment records:
-
-```text
-Python:       3.12.3
-PyTorch:      2.9.1+cu128
-torchvision:  0.24.1+cu128
-timm:         1.0.24
-CUDA runtime: 12.8
-cuDNN:        9.10.2
-GPU:          NVIDIA GeForce RTX 5090
-```
-
-CPU measurements used eight PyTorch threads under WSL2.
-
-Detailed environment metadata are included with the reproducibility materials.
-
----
 
 ## Repository Contents
 
