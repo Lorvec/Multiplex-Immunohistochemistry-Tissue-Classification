@@ -1,4 +1,0 @@
-{
-  "extends": "final.json",
-  "run_mode": "FREEZE_CHECK"
-}
