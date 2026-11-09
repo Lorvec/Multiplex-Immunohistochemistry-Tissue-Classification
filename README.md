@@ -1,152 +1,400 @@
-# Parameter-Efficient Knowledge-Distilled CNNs for MIHIC
-
+# Compact CNNs and Knowledge Distillation for MIHIC Tissue Classification
 
 [![MIHIC dataset DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10065510.svg)](https://doi.org/10.5281/zenodo.10065510)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB.svg)](https://www.python.org/)
 [![License: MIT](https://img.shields.io/badge/Code%20license-MIT-green.svg)](LICENSE)
 
-Official reproducibility repository for **“Parameter-Efficient Knowledge-Distilled CNNs for Multiplex Immunohistochemistry Tissue Classification.”**
+Official reproducibility repository for the study:
 
-The study evaluates a validation-frozen Nano–Tiny–Small CNN family, offline knowledge distillation from an ImageNet-pretrained ConvNeXt-Tiny teacher, contemporary compact comparators, calibration, per-class and stain-level behavior, and measured hardware efficiency on the official MIHIC splits.
+**“Performance–Efficiency Trade-offs of Compact CNNs and Knowledge Distillation for Multiplex Immunohistochemistry Tissue Classification.”**
 
-## What is included
+This study evaluates compact convolutional neural networks for tissue classification on the public MIHIC benchmark. The experiments systematically compare model capacity, knowledge distillation, single-scale versus mixed-kernel depthwise processing, probability quality, and measured computational efficiency.
 
-- The exact source executed for the reported experiment, preserved unchanged in [`provenance/executed_cell_source.py`](provenance/executed_cell_source.py) with a SHA-256 checksum.
-- A portable command-line runner, [`run_experiment.py`](run_experiment.py), driven by the frozen JSON configurations in [`configs/`](configs/).
-- Reusable implementations of the proposed architectures and paper metrics in [`src/mihic_repro/`](src/mihic_repro/).
-- All 39 model–seed metric rows (13 architectures × seeds 42, 123, and 2026), complete per-class and subgroup exports, paper-facing tables, figures, environment metadata, and the paper workbook in [`results/`](results/).
-- A portable dataset manifest containing filenames, class labels, stain/section metadata, and file sizes—but no image data and no private absolute paths.
-- Automated checks that recompute every archived mean/standard deviation and audit the paper’s main numerical comparisons.
+The study includes **19 model configurations evaluated across three training seeds (42, 123, and 2026), corresponding to 57 seed-level experiments**.
 
-The repository does **not** redistribute MIHIC images, model checkpoints, or the 7.6 GB dataset archive.
+---
 
-## Verify the published results without retraining
+## Study Overview
 
-Create a Python 3.12 environment and install the lightweight reporting dependencies:
+The compact-model analysis uses a full-factorial design across:
+
+- three model sizes: **Nano, Tiny, and Small**;
+- two depthwise-kernel configurations:
+  - single-scale 3×3 depthwise convolution;
+  - mixed-kernel 3×3/5×5 depthwise processing;
+- two training objectives:
+  - standard supervised training;
+  - knowledge distillation from a ConvNeXt-Tiny teacher.
+
+This results in **12 compact configurations**.
+
+Seven additional reference and comparator configurations are evaluated:
+
+- ConvNeXt-Tiny teacher;
+- RepViT M0.9;
+- MobileNetV4 Conv Small;
+- SHViT-S2;
+- EfficientNet-B0;
+- MobileNetV3-Small;
+- TinyCNN baseline.
+
+All models use the official MIHIC training, validation, and test partitions.
+
+---
+
+## Dataset
+
+The study uses the publicly available **MIHIC** dataset:
+
+> Wang R, Qiu Y, Wang T, et al. MIHIC: a multiplex IHC histopathological image classification dataset for lung cancer immune microenvironment quantification. *Frontiers in Immunology*. 2024;15:1334348.
+
+Dataset DOI:
+
+https://doi.org/10.5281/zenodo.10065510
+
+The dataset contains **309,698 non-overlapping 128×128 image patches** from 47 tissue-microarray sections representing 114 patients and 12 IHC stains.
+
+The seven tissue categories are:
+
+- Immune
+- Necrosis
+- Other
+- Stroma
+- Tumor
+- Alveoli
+- Background
+
+Official split sizes:
+
+| Partition | Patches |
+|---|---:|
+| Training | 195,001 |
+| Validation | 49,260 |
+| Test | 65,437 |
+| **Total** | **309,698** |
+
+The public release groups patches originating from the same annotated region into one partition. However, patient identifiers and a patient-to-split mapping are not available. Therefore, **patient-independent separation cannot be independently verified**, and the reported results should be interpreted as performance on the supplied MIHIC benchmark rather than evidence of patient-independent clinical generalization.
+
+---
+
+## Compact CNN Configurations
+
+The three compact model sizes use the following trainable parameter counts:
+
+| Model size | Single-scale | Mixed-kernel |
+|---|---:|---:|
+| Nano | 291,011 | 299,843 |
+| Tiny | 804,451 | 819,427 |
+| Small | 2,494,407 | 2,528,199 |
+
+All compact models use:
+
+- inverted-residual blocks;
+- batch normalization;
+- SiLU activation;
+- depthwise convolutions;
+- squeeze-and-excitation;
+- global adaptive average pooling;
+- a seven-class linear classifier.
+
+The mixed-kernel configuration partitions channels between 3×3 and 5×5 depthwise convolutions following established **MixConv** principles.
+
+---
+
+## Knowledge Distillation
+
+The teacher is an ImageNet-1K-pretrained **ConvNeXt-Tiny** model.
+
+Student training combines weighted label-smoothed cross-entropy with temperature-scaled Kullback–Leibler divergence:
+
+```text
+L = (1 − α) L_CE + α T² L_KL
+
+α = 0.55
+T = 3.0
+```
+
+For every Nano, Tiny, and Small architecture, a matched control without knowledge distillation is evaluated using the same optimization settings.
+
+Teacher logits are cached on normalized training images and associated with student samples using a verified sample-index mapping.
+
+---
+
+## Training Protocol
+
+The main training configuration uses:
+
+```text
+Seeds:              42, 123, 2026
+Maximum epochs:     45
+Early stopping:     9 epochs
+Warm-up:            3 epochs
+Train batch size:   64
+Evaluation batch:   128
+Optimizer:          AdamW
+Weight decay:       1e-4
+Label smoothing:    0.05
+Scratch/KD LR:      1e-3
+Pretrained LR:      3e-4
+Image size:         128 × 128
+```
+
+Images are resized to 128×128 pixels, converted to tensors, and normalized using ImageNet channel statistics. The same deterministic preprocessing pipeline is applied to the training, validation, and test partitions.
+
+Checkpoint selection is based on validation Macro-F1.
+
+---
+
+## Main Results
+
+The highest mean test Macro-F1 was obtained by **RepViT M0.9**.
+
+| Model | Parameters (M) | Test Macro-F1 |
+|---|---:|---:|
+| RepViT M0.9 | 4.725 | **0.8122 ± 0.0069** |
+| Small single-scale + KD | 2.494 | **0.8102 ± 0.0044** |
+| Small mixed-kernel + KD | 2.528 | 0.8068 ± 0.0034 |
+| ConvNeXt-Tiny teacher | 27.826 | 0.8008 ± 0.0116 |
+| Nano mixed-kernel + KD | 0.300 | 0.7965 ± 0.0123 |
+| Tiny single-scale + KD | 0.804 | 0.7940 ± 0.0074 |
+| MobileNetV4 Conv Small | 2.502 | 0.7892 ± 0.0051 |
+
+The purpose of the study is not to identify a universally dominant architecture, but to characterize **performance–efficiency trade-offs across model size, training strategy, and architecture configuration**.
+
+---
+
+## Knowledge-Distillation Ablation
+
+Knowledge distillation increased mean test Macro-F1 in all six matched compact-model comparisons:
+
+| Configuration | Δ Macro-F1 |
+|---|---:|
+| Nano single-scale | +0.0031 |
+| Nano mixed-kernel | +0.0132 |
+| Tiny single-scale | +0.0120 |
+| Tiny mixed-kernel | +0.0092 |
+| Small single-scale | +0.0143 |
+| Small mixed-kernel | +0.0049 |
+
+Mean AUROC also increased in all six comparisons, while mean negative log-likelihood decreased in all six.
+
+Expected calibration error improved in only three of the six comparisons, indicating that the effect of knowledge distillation on calibration depends on the architecture and calibration metric.
+
+---
+
+## Single-Scale versus Mixed-Kernel Processing
+
+Mixed 3×3/5×5 depthwise processing did **not** provide a consistent advantage over the simpler single-scale configuration.
+
+With knowledge distillation, the mean test Macro-F1 difference for mixed-kernel versus single-scale processing was:
+
+```text
+Nano:  +0.0057
+Tiny:  +0.0004
+Small: −0.0034
+```
+
+Without knowledge distillation:
+
+```text
+Nano:  −0.0044
+Tiny:  +0.0032
+Small: +0.0059
+```
+
+The direction of the effect therefore varies with model size and training objective.
+
+---
+
+## Probability Calibration
+
+Probability quality is assessed using:
+
+- negative log-likelihood (NLL);
+- expected calibration error (ECE);
+- classwise calibration summaries;
+- post-hoc temperature scaling.
+
+Temperature scaling is fitted using validation predictions and evaluated on the corresponding test predictions.
+
+Across the 19 configurations, temperature scaling reduced mean NLL in **13/19** configurations but reduced mean ECE in only **4/19**, showing that post-hoc scaling did not provide a uniform calibration improvement.
+
+---
+
+## Computational Efficiency
+
+Efficiency reporting includes:
+
+- trainable parameters;
+- approximate convolution-plus-linear GMACs;
+- checkpoint storage;
+- CPU batch-1 latency;
+- GPU batch-1 latency;
+- GPU batch-64 throughput;
+- peak GPU inference memory.
+
+Runtime measurements use synthetic FP32 model-only inputs and should not be interpreted as end-to-end whole-slide or clinical pipeline latency.
+
+For example:
+
+| Model | Params (M) | GMACs | GPU b1 (ms) | GPU b64 (img/s) | CPU b1 (ms) |
+|---|---:|---:|---:|---:|---:|
+| Small single + KD | 2.494 | 0.108 | 2.60 | 16,494 | 5.04 |
+| RepViT M0.9 | 4.725 | 0.267 | 4.58 | 12,027 | 11.94 |
+| ConvNeXt-Tiny teacher | 27.826 | 1.455 | 2.21 | 8,813 | 14.44 |
+| Nano mixed-kernel + KD | 0.300 | 0.028 | 2.30 | 25,277 | 3.01 |
+| Tiny single + KD | 0.804 | 0.036 | 1.58 | 41,700 | 2.53 |
+
+Lower parameter count or theoretical operation count does not necessarily imply lower latency in every hardware setting.
+
+---
+
+## Hardware and Software Environment
+
+The archived experimental environment records:
+
+```text
+Python:       3.12.3
+PyTorch:      2.9.1+cu128
+torchvision:  0.24.1+cu128
+timm:         1.0.24
+CUDA runtime: 12.8
+cuDNN:        9.10.2
+GPU:          NVIDIA GeForce RTX 5090
+```
+
+CPU measurements used eight PyTorch threads under WSL2.
+
+Detailed environment metadata are included with the reproducibility materials.
+
+---
+
+## Repository Contents
+
+The repository contains the code and machine-readable outputs required to inspect and reproduce the reported analyses.
+
+```text
+code/
+    MIHIC_NoAug_Full_Study.ipynb
+    mihic_noaug_full_study.py
+
+results/
+    validation_by_seed.csv
+    validation_summary.csv
+    test_by_seed.csv
+    efficiency.csv
+
+figures/
+    Figure_1_Study_Design.png
+    Figure_2_KD_Effects.png
+    Figure_3_Performance_Efficiency.png
+    Figure_4_Class_Specific_F1.png
+    Figure_5_Stain_Specific_F1.png
+
+supplementary/
+    architecture_specifications.csv
+    full_model_metrics.csv
+    kd_ablation_results.csv
+    single_vs_multiscale.csv
+    calibration_outputs/
+    reporting_metadata.json
+
+environment/
+    environment.json
+```
+
+The exact directory names may evolve slightly as the public release is finalized, but all files reported in the manuscript will be included before publication.
+
+The repository does **not** redistribute MIHIC image data.
+
+---
+
+## Reproduce the Study
+
+Download the MIHIC dataset from:
+
+https://doi.org/10.5281/zenodo.10065510
+
+Create a Python environment and install the required packages.
+
+Example:
 
 ```bash
 python3.12 -m venv .venv
-source .venv/bin/activate  # Windows PowerShell: .venv\Scripts\Activate.ps1
+source .venv/bin/activate
+
 python -m pip install --upgrade pip
-python -m pip install -r requirements/reporting.txt
-```
 
-Audit the archived seed-level results and rebuild all five paper figures:
-
-```bash
-python scripts/verify_reported_results.py
-python scripts/make_paper_figures.py --output-dir reproduced_figures
-```
-
-The verifier checks:
-
-1. completeness of all 13 models × 3 seeds;
-2. exact reconstruction of every numeric mean and sample standard deviation;
-3. the reported compression, knowledge-distillation, ablation, class-specific, and stain-specific comparisons;
-4. the 309,698-row portable manifest digest; and
-5. the checksum of the frozen executed source.
-
-## Obtain and validate MIHIC
-
-Download `MIHIC_dataset.zip` from the [official Zenodo record](https://doi.org/10.5281/zenodo.10065510). The source record reports a 7.6 GB archive with MD5:
-
-```text
-bd718137f70427d530947862332f4cdd
-```
-
-Extract it outside this repository. Point the validator to the directory that contains—or contains a nested directory with—`train/`, `val/`, and `test/`:
-
-```bash
-python scripts/validate_dataset.py --data-root /path/to/extracted/MIHIC
-```
-
-The full check compares all filenames and file sizes and must produce this portable-manifest SHA-256:
-
-```text
-70d8f78674402f157adc21b7480b1458ee434477d41cfff4425ffc155b21d996
-```
-
-For a faster folder/count-only check, add `--quick`. See [`docs/DATASET.md`](docs/DATASET.md) for the expected directory structure and split counts.
-
-## Reproduce the full experiment
-
-The paper environment used Python 3.12.3, PyTorch 2.9.1+cu128, torchvision 0.24.1+cu128, timm 1.0.24, CUDA runtime 12.8, and cuDNN 9.10.2. For the matching Linux/Windows CUDA 12.8 wheels:
-
-```bash
 python -m pip install torch==2.9.1 torchvision==0.24.1 \
-  --index-url https://download.pytorch.org/whl/cu128
-python -m pip install -r requirements/paper.txt
+    --index-url https://download.pytorch.org/whl/cu128
+
+python -m pip install timm==1.0.24
 ```
 
-Then validate the dataset and launch the frozen FINAL configuration:
+Place the extracted MIHIC dataset outside the repository and configure the dataset path in the notebook or command-line runner.
 
-```bash
-python scripts/validate_dataset.py --data-root /path/to/MIHIC
-
-python run_experiment.py \
-  --config configs/final.json \
-  --data-root /path/to/MIHIC \
-  --output-root outputs
-```
-
-FINAL trains and evaluates the complete 13-model registry for seeds 42, 123, and 2026. It downloads the declared ImageNet weights on first use. Runs are resumable: a completed model/seed directory is skipped unless `--force-rerun` is supplied.
-
-The two pre-final modes remain available and do not load the official test directory:
-
-```bash
-python run_experiment.py --config configs/pilot.json --data-root /path/to/MIHIC
-python run_experiment.py --config configs/freeze_check.json --data-root /path/to/MIHIC
-```
-
-Important: the paper results came from the frozen sequence PILOT → FREEZE_CHECK → FINAL. Do not use the test set to revise architectures or hyperparameters.
-
-## Principal archived results
-
-| Model | Parameters (M) | GMACs | Test Macro-F1 (mean ± SD) |
-|---|---:|---:|---:|
-| RepViT M0.9 (pretrained) | 4.725 | 0.2716 | 0.8179 ± 0.0086 |
-| Proposed Small (KD) | 2.528 | 0.1174 | 0.8104 ± 0.0057 |
-| ConvNeXt-Tiny teacher | 27.826 | 1.4595 | 0.8080 ± 0.0021 |
-| MobileNetV4 Conv Small (pretrained) | 2.502 | 0.0625 | 0.8025 ± 0.0072 |
-| Proposed Tiny (KD) | 0.819 | 0.0391 | 0.8016 ± 0.0100 |
-| Proposed Nano (KD) | 0.300 | 0.0298 | 0.8006 ± 0.0107 |
-
-The central result is performance preservation under compression, not universal benchmark dominance. In the recorded environment, latency rankings depended on device and batch size; hardware measurements should not be treated as portable constants.
-
-## Repository map
+The expected dataset structure contains:
 
 ```text
-configs/                 Frozen PILOT, FREEZE_CHECK, and FINAL settings
-docs/                    Dataset and reproduction details
-provenance/              Unchanged executed source and checksum
-requirements/            Exact paper and lightweight reporting dependencies
-results/
-  manifests/             Environment, methods snapshot, portable data manifest
-  paper_figures/         Final five manuscript figures
-  supplementary_figures/All-model confusion matrices and heatmaps
-  tables/                Raw seeds, summaries, per-class, stain, ablation CSVs
-  MIHIC_paper_tables.xlsx
-scripts/                 Dataset validation, numerical audit, figure rebuilding
-src/mihic_repro/         Reusable model, metric, and metadata components
-tests/                   Architecture, metric, manifest, and result checks
-run_experiment.py        Complete portable experiment runner
+train/
+val/
+test/
 ```
 
-## Reproducibility boundaries
+The study includes audit, architecture smoke tests, training, validation reporting, efficiency benchmarking, test evaluation, calibration analyses, and paper-output generation.
 
-- The official release groups patches from one annotated region into one split, but patient-independent separation cannot be verified because patient identifiers/mappings are unavailable.
-- Exact model metrics can vary slightly across software/hardware despite the recorded seeds and deterministic cuDNN settings. The archived values are the actual paper run; no claim of bitwise reproducibility across platforms is made.
-- CPU/GPU latency, throughput, peak memory, and training time are hardware-specific. The paper environment is recorded in [`results/manifests/environment.json`](results/manifests/environment.json).
-- The public Figure 5 source table contains the two-decimal values displayed in the manuscript. A full rerun writes the underlying per-seed count matrices and prediction files before reconstructing the aggregated matrix.
+---
 
-More detail is available in [`docs/REPRODUCIBILITY.md`](docs/REPRODUCIBILITY.md).
+## Reproducibility Boundaries
+
+Several limitations should be considered when interpreting or reproducing the results:
+
+1. Patient-independent separation cannot be independently verified from the released MIHIC metadata.
+2. The study uses three training seeds; these characterize optimization variability but do not provide patient-level uncertainty estimates.
+3. Pretrained models, randomly initialized models, and distilled students do not receive identical sources of prior information.
+4. Runtime measurements are hardware-specific.
+5. GMAC estimates describe model operations rather than end-to-end image-processing cost.
+6. Stain-specific subsets contain different class compositions and should be interpreted descriptively.
+7. Small numerical variation may occur across different CUDA, cuDNN, PyTorch, or hardware environments despite fixed seeds.
+
+---
+
+## Data Availability
+
+The MIHIC dataset is publicly available through Zenodo:
+
+https://doi.org/10.5281/zenodo.10065510
+
+This repository contains the code, experimental configuration, architecture specifications, seed-level results, calibration outputs, efficiency measurements, figures, and reporting metadata associated with the study.
+
+---
 
 ## Citation
 
-Until the article receives its final bibliographic record, use the repository citation exposed by [`CITATION.cff`](CITATION.cff). When using the MIHIC images, also cite the dataset creators:
+The manuscript is currently under preparation/submission.
+
+Until a final bibliographic record is available, please cite the MIHIC dataset when using the underlying images:
 
 > Wang R, Qiu Y, Wang T, et al. MIHIC: a multiplex IHC histopathological image classification dataset for lung cancer immune microenvironment quantification. *Frontiers in Immunology*. 2024;15:1334348. https://doi.org/10.3389/fimmu.2024.1334348
 
-## License and data ownership
+A repository citation will be provided through `CITATION.cff`.
 
-Repository code is released under the [MIT License](LICENSE). MIHIC images are not part of this repository and remain governed by the terms stated in the [official Zenodo dataset record](https://doi.org/10.5281/zenodo.10065510). Cite the dataset when using it.
+---
+
+## License
+
+Source code in this repository is released under the MIT License unless otherwise stated.
+
+The MIHIC images are **not distributed by this repository** and remain subject to the terms specified by the original dataset creators and Zenodo record.
+
+---
+
+## Contact
+
+**Dimitris Kalatzis**
+
+School of Science and Technology  
+Hellenic Open University  
+Patras, Greece
+
+Correspondence: kalatzis.dimitrios@ac.eap.gr
