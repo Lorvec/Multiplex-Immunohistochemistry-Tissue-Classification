@@ -6,12 +6,12 @@ authors:
   - family-names: Kalatzis
     given-names: Dimitris
     email: kalatzis.dimitrios@ac.eap.gr
-repository-code: "https://github.com/Lorvec/Multiplex-Immunohistochemistry-Tissue-Classification"
+repository-code: "https://github.com/Lorvec/Immunohistochemistry-Tissue-Classification"
 license: MIT
 version: 2.0.0
 date-released: 2026-11-09
 keywords:
-  - multiplex immunohistochemistry
+  - Immunohistochemistry
   - computational pathology
   - tissue classification
   - knowledge distillation
