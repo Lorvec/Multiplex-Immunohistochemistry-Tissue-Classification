@@ -1,4 +1,4 @@
-# Performance–Efficiency Trade-offs of Compact CNNs and Knowledge Distillation for Multiplex Immunohistochemistry Tissue Classification
+# Performance–Efficiency Trade-offs of Compact CNNs and Knowledge Distillation for Immunohistochemistry Tissue Classification
 
 [![MIHIC dataset DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.10065510.svg)](https://doi.org/10.5281/zenodo.10065510)
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-3776AB.svg)](https://www.python.org/)
@@ -6,7 +6,7 @@
 
 Reproducibility code for:
 
-**“Performance–Efficiency Trade-offs of Compact CNNs and Knowledge Distillation for Multiplex Immunohistochemistry Tissue Classification.”**
+**“Performance–Efficiency Trade-offs of Compact CNNs and Knowledge Distillation for Immunohistochemistry Tissue Classification.”**
 
 This repository is intentionally **code-first**. It does not redistribute MIHIC images, trained checkpoints, or archived result tables. Users download the public MIHIC dataset from its official Zenodo record and run the complete experiment locally.
 
