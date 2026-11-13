@@ -1,6 +1,6 @@
 cff-version: 1.2.0
 message: "If you use this software, please cite the associated paper and this repository."
-title: "Performance–Efficiency Trade-offs of Compact CNNs and Knowledge Distillation for Multiplex Immunohistochemistry Tissue Classification"
+title: "Performance–Efficiency Trade-offs of Compact CNNs and Knowledge Distillation for Immunohistochemistry Tissue Classification"
 type: software
 authors:
   - family-names: Kalatzis
